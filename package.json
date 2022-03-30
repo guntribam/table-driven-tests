@@ -2,12 +2,13 @@
   "name": "table-driven-tests",
   "version": "0.0.1",
   "description": "Japa plugin to use markdown tables as test data",
-  "main": "index.js",
-  "type": "module",
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
   "files": ["build/**/*"],
   
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "prepare" : "npm run build"
   },
   "repository": {
     "type": "git",
