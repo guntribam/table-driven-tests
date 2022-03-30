@@ -14,7 +14,7 @@
     "url": "git+https://github.com/guntribam/table-driven-tests.git"
   },
   "keywords": [
-    "japa"
+    "japa", "plugin", "adonis"
   ],
   "author": "guntribam",
   "license": "ISC",
