@@ -1,0 +1,28 @@
+{
+  "name": "table-driven-tests",
+  "version": "0.0.1",
+  "description": "Japa plugin to use markdown tables as test data",
+  "main": "index.js",
+  "type": "module",
+  "files": ["build/**/*"],
+  
+  "scripts": {
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/guntribam/table-driven-tests.git"
+  },
+  "keywords": [
+    "japa"
+  ],
+  "author": "guntribam",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/guntribam/table-driven-tests/issues"
+  },
+  "homepage": "https://github.com/guntribam/table-driven-tests#readme",
+  "dependencies": {
+    "parse-markdown-table": "^0.0.6"
+  }
+}
