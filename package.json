@@ -5,16 +5,21 @@
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "scripts": {
+    "build:watch": "tsc -w",
     "build": "tsc",
-    "prepare" : "npm run build"
+    "prepare": "npm run build"
   },
-  "files": ["build/**/*"],
+  "files": [
+    "build/**/*"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/guntribam/table-driven-tests.git"
   },
   "keywords": [
-    "japa", "plugin", "adonis"
+    "japa",
+    "plugin",
+    "adonis"
   ],
   "author": "guntribam",
   "license": "ISC",
@@ -24,5 +29,8 @@
   "homepage": "https://github.com/guntribam/table-driven-tests#readme",
   "dependencies": {
     "parse-markdown-table": "^0.0.6"
+  },
+  "devDependencies": {
+    "@japa/runner": "^2.0.5"
   }
 }

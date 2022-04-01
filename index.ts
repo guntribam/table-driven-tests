@@ -1,35 +1,33 @@
 import * as fs from "fs";
 import { createMarkdownObjectTable, Stream } from 'parse-markdown-table'
+import { Test } from '@japa/runner'
 
-interface TranslatedRow {
+type Auth = { username: string, password: string }
+
+export interface TranslatedRow {
     [key: string]: any,
     __rowProps: {
         entity: any,
         fromTable: any,
-        auth: { username: string, password: string }
+        auth: Auth
     }
 }
 
-export const translateTestData = async (
-    filename: string,
-    authFromTable: { username: string, password: string },
-    createDictionary: () => Promise<{ [key: string]: { field: string, domain: any } }>
-): Promise<TranslatedRow[]> => {
-    let translatedRows: TranslatedRow[] = [];
-    try {
-        const dictionary = await createDictionary();
-        const file: Stream = await fs.promises.readFile(filename.replace('.fixture.ts', '.md'), 'utf-8')
-        const data = await createMarkdownObjectTable(file)
-        for await (const row of data) {
-            translatedRows.push(translate(row, dictionary, authFromTable))
-        }
-    } catch (error) {
-        console.log("Erro ao criar massa de testes", error)
-    }
-    return translatedRows
+type DictionaryProps = { [key: string]: { field: string, domain: any } }
+type Dictionary = () => Promise<DictionaryProps>
+
+export interface TableProps {
+    tableFullPath: string
+    dictionary: Dictionary
+    authTableColumns?: Auth
 }
 
-function translate(row: any, dictionary: object, authFromTable: any) {
+export interface TableDrivenTestsConfig {
+    usernameColumn: string
+    passwordColumn: string
+}
+
+function translate(row: any, dictionary: DictionaryProps, authFromTable: Auth) {
     let translatedRow: TranslatedRow = {
         __rowProps: {
             entity: {},
@@ -37,31 +35,65 @@ function translate(row: any, dictionary: object, authFromTable: any) {
             auth: { username: '', password: '' }
         }
     }
+    const props = translatedRow.__rowProps;
 
     Object.entries(row).forEach(([rowHeader, rowValue]) => {
         translatedRow[rowHeader] = rowValue;
-        translatedRow.__rowProps.fromTable[rowHeader] = rowValue
+        props.fromTable[rowHeader] = rowValue
         Object.entries(dictionary).forEach(([key, { field, domain }]) => {
-            if(rowHeader === key){
+            if (rowHeader === key) {
                 translatedRow[key] = domain[row[key]];
-                if (field) translatedRow.__rowProps.entity[field] = domain[row[key]];
-                translatedRow.__rowProps.fromTable[key] = row[key]
+                if (field) props.entity[field] = domain[row[key]];
+                props.fromTable[key] = row[key]
             }
-            if(key === authFromTable.username) {
-                translatedRow.__rowProps.auth.username = domain[row[key]]
-            }
-            if(key === authFromTable.password) {
-                translatedRow.__rowProps.auth.password = domain[row[key]]
-            }
+            if (key === authFromTable.username) props.auth.username = domain[row[key]]
+            if (key === authFromTable.password) props.auth.password = domain[row[key]]
         })
     })
     return translatedRow
 }
 
-export default function tableDrivenTests() {
-    return async function (config: any, runner: any, { Test }: {Test: any}) {
-        Test.macro('withTableData', translateTestData)
+async function getTableValues(tableFullPath: string) {
+    let untranslatedRows: any[] = [];
+    try {
+        const file: Stream = await fs.promises.readFile(tableFullPath.replace('.fixture.ts', '.md'), 'utf-8')
+        const data = await createMarkdownObjectTable(file)
+        for await (const row of data) {
+            untranslatedRows.push(row)
+        }
+        return untranslatedRows;
+    } catch (error) {
+        console.log("Error when reading data from table ->", error)
     }
-  }
+}
+
+async function createDictionary(dictionary: Dictionary) {
+    try {
+        return await dictionary();
+    } catch (error) {
+        console.log("Error when creating dictionary: ", error)
+    }
+}
+
+export async function translateTestData({ tableFullPath, authTableColumns, dictionary }: Required<TableProps>): Promise<TranslatedRow[]> {
+    const translation = await createDictionary(dictionary);
+    const untranslatedRows = await getTableValues(tableFullPath)
+    if (!translation || !untranslatedRows) return [];
+    return untranslatedRows.map(row => translate(row, translation, authTableColumns))
+}
+
+
+export default function tableDrivenTests({ usernameColumn, passwordColumn }: TableDrivenTestsConfig) {
+    return async function (_: any, __: any, { Test }: { Test: any }) {
+        Test.macro('withTableData', function (this: Test<TranslatedRow[]>, { dictionary, tableFullPath, authTableColumns }: TableProps) {
+            return this.with(async () => await translateTestData({
+                tableFullPath: tableFullPath || __filename,
+                authTableColumns: authTableColumns || { username: usernameColumn, password: passwordColumn },
+                dictionary
+            })
+            );
+        })
+    }
+}
 
 
