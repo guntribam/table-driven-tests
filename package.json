@@ -1,6 +1,6 @@
 {
   "name": "table-driven-tests",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Japa plugin to use markdown tables as test data",
   "main": "build/index.js",
   "types": "build/index.d.ts",
