@@ -62,6 +62,13 @@ test('add two numbers')
      assert.equal(sum(Number(row.X), Number(row.Y)), row.result)
    })
 ```
+Provide the following type in `japaTypes.ts` to make the compiler happy
+```ts
+import type { TableProps, TranslatedRow } from 'table-driven-tests'
+interface Test<TestData> {  
+    withTableData: (tableProps?: TableProps) => Test<TranslatedRow[]>
+}
+```
 # Questions
 
 ## How can i change the extension?

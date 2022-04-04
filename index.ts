@@ -30,7 +30,7 @@ export interface TableDrivenTestsConfig {
     extension?: string
 }
 
-function translate(row: any, dictionary: DictionaryProps, authFromTable: Auth) {
+function translate(row: any, dictionary: DictionaryProps, {username, password}: Auth) {
     let translatedRow: TranslatedRow = {
         __rowProps: {
             entity: {},
@@ -49,8 +49,8 @@ function translate(row: any, dictionary: DictionaryProps, authFromTable: Auth) {
                 if (field) props.entity[field] = domain[row[key]];
                 props.fromTable[key] = row[key]
             }
-            if (key === authFromTable.username) props.auth.username = domain[row[key]]
-            if (key === authFromTable.password) props.auth.password = domain[row[key]]
+            if (key === username) props.auth.username = domain[row[key]]
+            if (key === password) props.auth.password = domain[row[key]]
         })
     })
     return translatedRow
@@ -101,7 +101,7 @@ async function translateTestData({ tablePath, authColumns, dictionary, extension
     return untranslatedRows.map(row => translate(row, translation, authColumns))
 }
 
-export default function tableDrivenTests({ usernameHeader, passwordHeader, extension }: TableDrivenTestsConfig) {
+export default function tableDrivenTests({ usernameHeader, passwordHeader, extension }: TableDrivenTestsConfig = {}) {
     return async function (_: any, __: any, { Test }: { Test: any }) {
         Test.macro('withTableData', function (this: Test<TranslatedRow[]>, {
             dictionary = dictionaryNotProvided,
