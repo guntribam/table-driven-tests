@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import { createMarkdownObjectTable, Stream } from 'parse-markdown-table'
 import { Test } from '@japa/runner'
+import getCallerFile from 'get-caller-file'
 
 type Auth = { username: string, password: string }
 
@@ -8,23 +9,25 @@ export interface TranslatedRow {
     [key: string]: any,
     __rowProps: {
         entity: any,
-        fromTable: any,
+        fromTable?: any,
         auth: Auth
     }
 }
 
 type DictionaryProps = { [key: string]: { field: string, domain: any } }
-type Dictionary = () => Promise<DictionaryProps>
+type Dictionary = (rows?: any) => Promise<DictionaryProps>
 
 export interface TableProps {
-    tableFullPath: string
-    dictionary: Dictionary
-    authTableColumns?: Auth
+    tablePath?: string
+    extension?: string
+    dictionary?: Dictionary
+    authColumns?: Auth
 }
 
 export interface TableDrivenTestsConfig {
-    usernameColumn: string
-    passwordColumn: string
+    usernameHeader?: string
+    passwordHeader?: string
+    extension?: string
 }
 
 function translate(row: any, dictionary: DictionaryProps, authFromTable: Auth) {
@@ -53,10 +56,10 @@ function translate(row: any, dictionary: DictionaryProps, authFromTable: Auth) {
     return translatedRow
 }
 
-async function getTableValues(tableFullPath: string) {
+async function getTableValues(tablePath: string, extension: string) {
     let untranslatedRows: any[] = [];
     try {
-        const file: Stream = await fs.promises.readFile(tableFullPath.replace('.fixture.ts', '.md'), 'utf-8')
+        const file: Stream = await fs.promises.readFile(tablePath.replace(extension, '.md'), 'utf-8')
         const data = await createMarkdownObjectTable(file)
         for await (const row of data) {
             untranslatedRows.push(row)
@@ -67,31 +70,46 @@ async function getTableValues(tableFullPath: string) {
     }
 }
 
-async function createDictionary(dictionary: Dictionary) {
+async function dictionaryNotProvided(rows: any): Promise<DictionaryProps> {
+    return Object.keys(rows[0]).map(k => k).reduce((acc, key) => {
+        let fields: any = [...new Set(rows.map((row: any) => row[key]))];
+        return {
+            ...acc,
+            ...fields.reduce((obj: any, field: string) => {
+                if (obj[key]) {
+                    return { [key]: { field: '', domain: { ...obj[key].domain, [field]: [field] } } }
+                } else {
+                    return { [key]: { field: '', domain: { [field]: [field] } } }
+                }
+            }, {})
+        }
+    }, {})
+}
+
+async function createDictionary(dictionary: Dictionary, rows: any) {
     try {
-        return await dictionary();
+        return await dictionary(rows);
     } catch (error) {
         console.log("Error when creating dictionary: ", error)
     }
 }
 
-export async function translateTestData({ tableFullPath, authTableColumns, dictionary }: Required<TableProps>): Promise<TranslatedRow[]> {
-    const translation = await createDictionary(dictionary);
-    const untranslatedRows = await getTableValues(tableFullPath)
+async function translateTestData({ tablePath, authColumns, dictionary, extension }: Required<TableProps>): Promise<TranslatedRow[]> {
+    const untranslatedRows = await getTableValues(tablePath, extension)
+    const translation = await createDictionary(dictionary, untranslatedRows);
     if (!translation || !untranslatedRows) return [];
-    return untranslatedRows.map(row => translate(row, translation, authTableColumns))
+    return untranslatedRows.map(row => translate(row, translation, authColumns))
 }
 
-
-export default function tableDrivenTests({ usernameColumn, passwordColumn }: TableDrivenTestsConfig) {
+export default function tableDrivenTests({ usernameHeader, passwordHeader, extension }: TableDrivenTestsConfig) {
     return async function (_: any, __: any, { Test }: { Test: any }) {
-        Test.macro('withTableData', function (this: Test<TranslatedRow[]>, { dictionary, tableFullPath, authTableColumns }: TableProps) {
-            return this.with(async () => await translateTestData({
-                tableFullPath: tableFullPath || __filename,
-                authTableColumns: authTableColumns || { username: usernameColumn, password: passwordColumn },
-                dictionary
-            })
-            );
+        Test.macro('withTableData', function (this: Test<TranslatedRow[]>, {
+            dictionary = dictionaryNotProvided,
+            tablePath = getCallerFile(),
+            authColumns = { username: usernameHeader || 'Username', password: passwordHeader || 'Password' }
+        }: Omit<TableProps, 'extension'> = {}) {
+            return this.with(async () =>
+                await translateTestData({ tablePath, extension: extension || '.spec.ts', authColumns, dictionary }));
         })
     }
 }
