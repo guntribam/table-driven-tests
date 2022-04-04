@@ -111,4 +111,4 @@ test.group('Math.add', () => {
 
 # Complex example using adonis
 
-
+[![table-driven-tests japa plugin](https://res.cloudinary.com/marcomontalbano/image/upload/v1649086499/video_to_markdown/images/youtube--AdSQ0WIuUYk-c05b58ac6eb4c4700831b2b3070cd403.jpg)](https://www.youtube.com/watch?v=AdSQ0WIuUYk "table-driven-tests japa plugin")
