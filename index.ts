@@ -30,7 +30,7 @@ export interface TableDrivenTestsConfig {
     extension?: string
 }
 
-function translate(row: any, dictionary: DictionaryProps, {username, password}: Auth) {
+function translate(row: any, dictionary: DictionaryProps, { username, password }: Auth) {
     let translatedRow: TranslatedRow = {
         __rowProps: {
             entity: {},

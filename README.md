@@ -5,25 +5,15 @@ The `table-driven-tests` plugin makes it simple to use markdown tables on your t
 
 Create a markdown table with the same filename as your test and you have an array with each row of your table as data.
 
-
-- [table-driven-tests](#table-driven-tests)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Questions](#questions)
-  - [How can i change the extension?](#how-can-i-change-the-extension)
-  - [What if i don't want to name the table as my file?](#what-if-i-dont-want-to-name-the-table-as-my-file)
-  - [How can i get the row on my test already typed?](#how-can-i-get-the-row-on-my-test-already-typed)
-- [Complex example using adonis](#complex-example-using-adonis)
-
 # Installation
 Install the package from the npm registry as follows:
 
 ```sh
-npm i table-driven-tests
+npm i -D table-driven-tests
 
-yarn add table-driven-tests
+yarn add -D table-driven-tests
 
-pnpm add table-driven-tests
+pnpm add -D table-driven-tests
 ```
 
 # Usage
@@ -109,6 +99,10 @@ test.group('Math.add', () => {
 })
 ```
 
-# Complex example using adonis
+# More advanced example using adonis
 
 [![table-driven-tests japa plugin](https://res.cloudinary.com/marcomontalbano/image/upload/v1649086499/video_to_markdown/images/youtube--AdSQ0WIuUYk-c05b58ac6eb4c4700831b2b3070cd403.jpg)](https://www.youtube.com/watch?v=AdSQ0WIuUYk "table-driven-tests japa plugin")
+
+# Roadmap
+- [ ] Make it work with csv
+- [ ] Create a bin/cli that generate the skeleton of the dictionary
